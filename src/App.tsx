@@ -110,6 +110,12 @@ export default function App() {
 
   const [showRewardModal, setShowRewardModal] = useState<Reward | null>(null);
   const [isFlipping, setIsFlipping] = useState(false);
+  const [toast, setToast] = useState<string | null>(null);
+
+  const showToast = (message: string) => {
+    setToast(message);
+    setTimeout(() => setToast(null), 2000);
+  };
 
   // Derived state
   const litBooksCount = useMemo(() => userState.books.filter(b => b.points >= POINTS_PER_BOOK).length, [userState.books]);
@@ -134,7 +140,12 @@ export default function App() {
   };
 
   const handleFlip = () => {
-    if (userState.flipChances <= 0 || isFlipping) return;
+    if (isFlipping) return;
+    
+    if (userState.flipChances <= 0) {
+      showToast('去做任务获取翻书次数');
+      return;
+    }
     
     setIsFlipping(true);
     setFlipKey(prev => prev + 1);
@@ -203,10 +214,18 @@ export default function App() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="text-5xl serif leading-tight mb-4"
+          className="text-5xl serif leading-tight mb-2"
         >
           世界共读计划
         </motion.h1>
+        <motion.p
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+          className="text-brand-accent/60 text-sm serif"
+        >
+          【翻阅并点亮书籍，助力全世界人民读书】
+        </motion.p>
       </header>
 
       <div className="px-6 flex flex-col items-center">
@@ -692,6 +711,20 @@ export default function App() {
           <span className="text-[10px] uppercase tracking-tighter font-bold">奖励</span>
         </button>
       </div>
+
+      {/* Toast Notification */}
+      <AnimatePresence>
+        {toast && (
+          <motion.div
+            initial={{ opacity: 0, y: 50, x: '-50%' }}
+            animate={{ opacity: 1, y: 0, x: '-50%' }}
+            exit={{ opacity: 0, y: 20, x: '-50%' }}
+            className="fixed bottom-24 left-1/2 -translate-x-1/2 z-[200] bg-black/80 text-white px-6 py-3 rounded-full text-sm font-medium shadow-xl backdrop-blur-md whitespace-nowrap"
+          >
+            {toast}
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Reward Modal */}
       <AnimatePresence>
