@@ -11,6 +11,8 @@ import {
   Heart, 
   Share2, 
   ChevronRight, 
+  ChevronUp,
+  ChevronDown,
   X, 
   CheckCircle2, 
   Info,
@@ -111,6 +113,7 @@ export default function App() {
   const [showRewardModal, setShowRewardModal] = useState<Reward | null>(null);
   const [isFlipping, setIsFlipping] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
+  const [showTasks, setShowTasks] = useState(false);
 
   const showToast = (message: string) => {
     setToast(message);
@@ -201,7 +204,7 @@ export default function App() {
   // --- Sub-Views ---
 
   const HomeView = () => (
-    <div className="space-y-8 pb-12">
+    <div className="space-y-8 pb-32">
       <header className="text-center pt-12 px-6">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -325,74 +328,27 @@ export default function App() {
               </div>
               <div className="flex-1">
                 <h4 className="font-medium">爱心公益进度</h4>
-                <p className="text-xs text-gray-500">全站已累计翻书 124,582 次</p>
+                <p className="text-xs text-gray-500">全站已累计翻书 18,432 次</p>
               </div>
               <ChevronRight size={20} className="text-gray-300" />
             </div>
           </Card>
-
-          {/* Tasks Section Embedded */}
-          <div className="pt-8 space-y-8">
-            <div className="flex items-center justify-between px-2">
-              <h2 className="text-2xl serif">任务中心</h2>
-              <div className="text-xs font-bold text-brand-accent">
-                翻书次数: {userState.flipChances}
-              </div>
-            </div>
-
-            <div className="space-y-8">
-              {[
-                { id: 'daily', label: '每日任务' },
-                { id: 'once', label: '一次性任务' },
-                { id: 'unlimited', label: '不限次任务' }
-              ].map(cat => (
-                <div key={cat.id} className="space-y-4">
-                  <h3 className="text-xs font-bold uppercase tracking-widest text-gray-400 px-2 flex items-center gap-2">
-                    <div className="w-1 h-3 bg-brand-accent rounded-full" />
-                    {cat.label}
-                  </h3>
-                  <div className="space-y-3">
-                    {TASKS.filter(t => t.category === cat.id).map(task => {
-                      const currentCount = userState.completedTasks[task.id] || 0;
-                      const completed = currentCount >= task.limit;
-                      const progress = (currentCount / task.limit) * 100;
-                      
-                      return (
-                        <div key={task.id} className="bg-white p-4 rounded-2xl shadow-sm border border-black/5">
-                          <div className="flex items-center gap-4 mb-3">
-                            <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${completed ? 'bg-green-50 text-green-500' : 'bg-brand-bg text-brand-accent'}`}>
-                              {completed ? <CheckCircle2 size={20} /> : <Star size={20} />}
-                            </div>
-                            <div className="flex-1">
-                              <h4 className="font-medium text-sm">{task.name}</h4>
-                              <p className="text-[10px] text-gray-400">{task.condition}</p>
-                            </div>
-                            <div className="text-right shrink-0">
-                              <div className="text-xs font-bold text-brand-accent mb-1">+{task.reward} 次</div>
-                              <button 
-                                onClick={() => completeTask(task.id)}
-                                disabled={completed}
-                                className={`text-[10px] px-3 py-1 rounded-full border ${completed ? 'border-gray-100 text-gray-300' : 'border-brand-accent text-brand-accent'}`}
-                              >
-                                {completed ? '已完成' : '去完成'}
-                              </button>
-                            </div>
-                          </div>
-                          {task.limit > 1 && task.limit < 999 && (
-                            <div className="flex justify-between text-[9px] text-gray-400 font-bold uppercase">
-                              <span>进度</span>
-                              <span>{currentCount}/{task.limit}</span>
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
         </div>
+      </div>
+
+      {/* Task Bottom Sheet Trigger */}
+      <div className="fixed bottom-0 left-0 right-0 z-50 flex flex-col items-center">
+        <motion.div 
+          onClick={() => setShowTasks(true)}
+          className="bg-white rounded-t-[2.5rem] shadow-[0_-10px_30px_rgba(0,0,0,0.05)] w-full max-w-md p-6 flex flex-col items-center cursor-pointer border-t border-black/5"
+          whileTap={{ y: 5 }}
+        >
+          <div className="w-12 h-1.5 bg-brand-accent/10 rounded-full mb-4" />
+          <div className="flex items-center gap-2 text-brand-accent font-bold">
+            <span className="text-lg">任务列表</span>
+            <ChevronUp size={20} />
+          </div>
+        </motion.div>
       </div>
     </div>
   );
@@ -580,54 +536,101 @@ export default function App() {
     </div>
   );
 
-  const CharityView = () => (
-    <div className="p-6 pb-24 space-y-8">
-      <div className="flex items-center justify-between">
-        <button onClick={() => setView('home')} className="p-2 rounded-full bg-white shadow-sm">
-          <ArrowLeft size={20} />
-        </button>
-        <h2 className="text-2xl serif">献爱心</h2>
-        <div className="w-10" />
+  const CharityView = () => {
+    const globalHearts = 18432 + userState.personalCharityValue;
+    const targetHearts = 450000;
+    const donatedBooks = 8;
+    const nextMilestoneHearts = 20000;
+    const neededForNext = nextMilestoneHearts - globalHearts;
+
+    const milestones = [
+      { hearts: 1000, books: 1, status: 'completed' },
+      { hearts: 3000, books: 3, status: 'completed' },
+      { hearts: 8000, books: 8, status: 'completed' },
+      { hearts: 20000, books: 18, status: 'in-progress' },
+      { hearts: 50000, books: 38, status: 'locked' },
+      { hearts: 100000, books: 68, status: 'locked' },
+      { hearts: 200000, books: 118, status: 'locked' },
+    ];
+
+    return (
+      <div className="min-h-screen bg-[#F9F6F2] pb-24">
+        <div className="p-6 space-y-6">
+          <div className="flex items-center justify-between">
+            <button onClick={() => setView('home')} className="p-2 rounded-full bg-white shadow-sm">
+              <ArrowLeft size={20} />
+            </button>
+            <div className="w-10" />
+          </div>
+
+          <div className="space-y-1">
+            <h2 className="text-2xl font-bold text-gray-800">全站爱心公益进度</h2>
+            <p className="text-xs text-gray-400 italic">"每一颗爱心，都在为阅读铺路"</p>
+          </div>
+
+          {/* Main Heart Card */}
+          <div className="bg-white rounded-3xl p-8 shadow-sm border border-black/5 text-center space-y-4">
+            <div className="text-red-500 flex justify-center">
+              <Heart size={40} fill="currentColor" />
+            </div>
+            <div className="space-y-1">
+              <div className="text-4xl font-medium text-gray-800">{globalHearts.toLocaleString()}</div>
+              <div className="text-xs text-gray-400">全站累计爱心</div>
+            </div>
+            <div className="space-y-2">
+              <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                <motion.div 
+                  initial={{ width: 0 }}
+                  animate={{ width: `${(globalHearts / targetHearts) * 100}%` }}
+                  className="h-full bg-[#E6B17E]"
+                />
+              </div>
+              <div className="flex justify-between text-[10px] text-gray-400">
+                <span>0</span>
+                <span>终极目标 {targetHearts.toLocaleString()}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Donated Books Card */}
+          <div className="bg-white rounded-3xl p-6 shadow-sm border border-black/5 flex items-center gap-4">
+            <div className="w-12 h-12 rounded-2xl bg-[#FDF6ED] flex items-center justify-center text-[#E6B17E]">
+              <Gift size={24} />
+            </div>
+            <div className="flex-1">
+              <h4 className="font-bold text-gray-800">累计赠书 {donatedBooks} 本</h4>
+              <p className="text-[11px] text-gray-400">
+                再努力 <span className="text-red-400 font-bold">{neededForNext.toLocaleString()}</span> 颗爱心，就能让更多孩子读上书
+              </p>
+            </div>
+          </div>
+
+          {/* Milestones List */}
+          <div className="space-y-4">
+            <h3 className="text-xs font-bold text-gray-400 px-2">里程碑进度</h3>
+            <div className="space-y-3">
+              {milestones.map((m, i) => (
+                <div key={i} className="bg-white rounded-2xl p-4 shadow-sm border border-black/5 flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${m.status === 'completed' ? 'bg-green-50 text-green-500' : m.status === 'in-progress' ? 'bg-blue-50 text-blue-500' : 'bg-gray-50 text-gray-300'}`}>
+                      {m.status === 'completed' ? <CheckCircle2 size={20} /> : <BookOpen size={20} />}
+                    </div>
+                    <div>
+                      <div className="text-sm font-bold text-gray-800">{m.hearts.toLocaleString()} 爱心</div>
+                      <div className="text-[10px] text-gray-400">累计赠书 {m.books} 本</div>
+                    </div>
+                  </div>
+                  <div className={`text-[10px] font-bold ${m.status === 'completed' ? 'text-orange-300' : m.status === 'in-progress' ? 'text-red-400' : 'text-gray-300'}`}>
+                    {m.status === 'completed' ? '已达成' : m.status === 'in-progress' ? '进行中' : ''}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
       </div>
-
-      <div className="text-center space-y-4 py-8">
-        <div className="w-24 h-24 bg-red-50 rounded-full flex items-center justify-center text-red-500 mx-auto">
-          <Heart size={48} fill="currentColor" />
-        </div>
-        <h3 className="text-xl serif">阅读公益，爱心传递</h3>
-        <p className="text-sm text-gray-500 px-8">
-          你每点亮一本书，都在为阅读公益积攒一份力量。全站累计翻书达到阈值，平台将统一捐赠图书资源。
-        </p>
-      </div>
-
-      <Card className="space-y-6">
-        <div>
-          <div className="flex justify-between text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">
-            <span>全站累计翻书</span>
-            <span>目标: 1,000,000</span>
-          </div>
-          <ProgressBar current={124582 + userState.personalCharityValue} total={1000000} />
-          <p className="text-[10px] text-gray-400 mt-2 text-center">当前已达成 12.4%</p>
-        </div>
-
-        <div className="pt-6 border-t border-gray-100 grid grid-cols-2 gap-4">
-          <div className="text-center">
-            <div className="text-2xl font-light text-brand-accent">{userState.personalCharityValue}</div>
-            <div className="text-[10px] text-gray-400 uppercase tracking-widest">个人爱心值</div>
-          </div>
-          <div className="text-center border-l border-gray-100">
-            <div className="text-2xl font-light text-brand-accent">{litBooksCount}</div>
-            <div className="text-[10px] text-gray-400 uppercase tracking-widest">点亮书本数</div>
-          </div>
-        </div>
-      </Card>
-
-      <Button className="w-full">
-        <Share2 size={18} />
-        分享邀请好友参与
-      </Button>
-    </div>
-  );
+    );
+  };
 
   const RewardsView = () => (
     <div className="p-6 pb-24 space-y-8">
@@ -711,6 +714,83 @@ export default function App() {
           <span className="text-[10px] uppercase tracking-tighter font-bold">奖励</span>
         </button>
       </div>
+
+      {/* Task Bottom Sheet */}
+      <AnimatePresence>
+        {showTasks && (
+          <>
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowTasks(false)}
+              className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[100]"
+            />
+            <motion.div
+              initial={{ y: '100%' }}
+              animate={{ y: 0 }}
+              exit={{ y: '100%' }}
+              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+              className="fixed bottom-0 left-0 right-0 bg-white rounded-t-[3rem] z-[101] max-h-[85vh] overflow-y-auto w-full max-w-md mx-auto shadow-2xl"
+            >
+              <div className="p-8 space-y-8">
+                <div className="flex flex-col items-center">
+                  <div className="w-12 h-1.5 bg-brand-accent/10 rounded-full mb-6" />
+                  <div className="flex items-center gap-2 text-brand-accent font-bold mb-8">
+                    <span className="text-xl">任务列表</span>
+                    <ChevronDown size={24} onClick={() => setShowTasks(false)} className="cursor-pointer" />
+                  </div>
+                </div>
+
+                <div className="space-y-10">
+                  {[
+                    { id: 'daily', label: '每日任务' },
+                    { id: 'once', label: '一次性任务' },
+                    { id: 'unlimited', label: '不限次任务' }
+                  ].map(cat => (
+                    <div key={cat.id} className="space-y-6">
+                      <h3 className="text-sm font-bold uppercase tracking-widest text-gray-400 px-2 flex items-center gap-3">
+                        <div className="w-1.5 h-4 bg-brand-accent rounded-full" />
+                        {cat.label}
+                      </h3>
+                      <div className="space-y-4">
+                        {TASKS.filter(t => t.category === cat.id).map(task => {
+                          const currentCount = userState.completedTasks[task.id] || 0;
+                          const completed = currentCount >= task.limit;
+                          const progress = (currentCount / task.limit) * 100;
+                          
+                          return (
+                            <div key={task.id} className="bg-[#FDF6ED]/50 p-6 rounded-[2rem] border border-brand-accent/5">
+                              <div className="flex items-center gap-5">
+                                <div className={`w-14 h-14 rounded-2xl flex items-center justify-center shrink-0 ${completed ? 'bg-green-50 text-green-500' : 'bg-brand-accent/10 text-brand-accent'}`}>
+                                  {completed ? <CheckCircle2 size={28} /> : <Star size={28} />}
+                                </div>
+                                <div className="flex-1">
+                                  <h4 className="font-bold text-lg text-gray-800">{task.name}</h4>
+                                  <p className="text-xs text-gray-400 mt-1">{task.condition}</p>
+                                </div>
+                                <div className="text-right shrink-0">
+                                  <button 
+                                    onClick={() => completeTask(task.id)}
+                                    disabled={completed}
+                                    className={`px-6 py-2 rounded-full text-sm font-bold transition-all ${completed ? 'bg-gray-100 text-gray-400' : 'bg-brand-accent text-white shadow-lg shadow-brand-accent/20 active:scale-95'}`}
+                                  >
+                                    {completed ? '已完成' : '去完成'}
+                                  </button>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
 
       {/* Toast Notification */}
       <AnimatePresence>
