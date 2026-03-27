@@ -94,7 +94,7 @@ const ProgressBar = ({ current, total, label }: { current: number, total: number
 // --- Main App ---
 
 export default function App() {
-  const [view, setView] = useState<'home' | 'card' | 'bookshelf' | 'charity' | 'rewards' | 'rules'>('home');
+  const [view, setView] = useState<'home' | 'card' | 'bookshelf' | 'charity' | 'rewards' | 'rules' | 'certificate'>('home');
   const [flipKey, setFlipKey] = useState(0); // For triggering animation
   const [userState, setUserState] = useState<UserState>(() => {
     // Initial state
@@ -627,6 +627,71 @@ export default function App() {
               ))}
             </div>
           </div>
+
+          <div className="pt-4">
+            <Button 
+              onClick={() => setView('certificate')} 
+              className="w-full bg-[#E6B17E] hover:bg-[#d4a06d] text-white py-4 rounded-2xl shadow-lg shadow-orange-200"
+            >
+              领取证书
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  const CertificateView = () => {
+    const globalHearts = 18432 + userState.personalCharityValue;
+    return (
+      <div className="min-h-screen bg-[#F9F6F2] p-6 flex flex-col items-center justify-center space-y-8">
+        <button onClick={() => setView('charity')} className="absolute top-6 left-6 p-2 rounded-full bg-white shadow-sm">
+          <ArrowLeft size={20} />
+        </button>
+        
+        <motion.div
+          initial={{ scale: 0.9, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          className="w-full max-w-sm bg-white rounded-[2.5rem] shadow-2xl p-10 flex flex-col items-center text-center border-[12px] border-[#E6B17E]/10 relative overflow-hidden"
+        >
+          {/* Decorative elements */}
+          <div className="absolute top-0 left-0 w-24 h-24 bg-[#E6B17E]/5 rounded-br-full" />
+          <div className="absolute bottom-0 right-0 w-24 h-24 bg-[#E6B17E]/5 rounded-tl-full" />
+          
+          <div className="w-20 h-20 rounded-full bg-[#FDF6ED] flex items-center justify-center text-[#E6B17E] mb-8 relative z-10">
+            <Trophy size={40} />
+          </div>
+          
+          <h2 className="text-2xl font-bold text-gray-800 mb-2 relative z-10">爱心公益证书</h2>
+          <p className="text-xs text-gray-400 mb-10 tracking-widest uppercase relative z-10">CERTIFICATE OF CHARITY</p>
+          
+          <div className="w-full space-y-8 relative z-10">
+            <div className="space-y-2">
+              <div className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">个人贡献爱心值</div>
+              <div className="text-4xl font-medium text-[#E6B17E]">{userState.personalCharityValue.toLocaleString()}</div>
+            </div>
+            
+            <div className="w-12 h-px bg-gray-100 mx-auto" />
+            
+            <div className="space-y-2">
+              <div className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">平台累计爱心值</div>
+              <div className="text-2xl font-medium text-gray-700">{globalHearts.toLocaleString()}</div>
+            </div>
+          </div>
+          
+          <div className="mt-12 pt-8 border-t border-gray-50 w-full flex flex-col items-center space-y-4 relative z-10">
+            <div className="text-[10px] text-gray-300 italic">“感谢您为世界共读计划做出的贡献”</div>
+            <div className="flex items-center gap-2 text-[#E6B17E] font-bold text-sm">
+              <Star size={14} fill="currentColor" />
+              <span>世界共读计划组委会</span>
+            </div>
+          </div>
+        </motion.div>
+
+        <div className="w-full max-w-sm">
+          <Button onClick={() => showToast('证书已保存到相册')} className="w-full bg-[#E6B17E] hover:bg-[#d4a06d]">
+            保存证书
+          </Button>
         </div>
       </div>
     );
@@ -677,6 +742,7 @@ export default function App() {
           {view === 'card' && <CardView />}
           {view === 'bookshelf' && <BookshelfView />}
           {view === 'charity' && <CharityView />}
+          {view === 'certificate' && <CertificateView />}
           {view === 'rewards' && <RewardsView />}
           {view === 'rules' && (
             <div className="p-6 space-y-6">
