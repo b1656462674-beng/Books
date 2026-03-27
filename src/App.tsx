@@ -680,10 +680,13 @@ export default function App() {
           </div>
           
           <div className="mt-12 pt-8 border-t border-gray-50 w-full flex flex-col items-center space-y-4 relative z-10">
+            <div className="text-xs text-gray-600 leading-relaxed px-4">
+              你捐赠的 <span className="text-[#E6B17E] font-bold">{userState.personalCharityValue.toLocaleString()}</span> 爱心将用于支持贫困山区孩子的读书计划。
+            </div>
             <div className="text-[10px] text-gray-300 italic">“感谢您为世界共读计划做出的贡献”</div>
             <div className="flex items-center gap-2 text-[#E6B17E] font-bold text-sm">
               <Star size={14} fill="currentColor" />
-              <span>世界共读计划组委会</span>
+              <span>HelloTalk公益慈善基金会</span>
             </div>
           </div>
         </motion.div>
